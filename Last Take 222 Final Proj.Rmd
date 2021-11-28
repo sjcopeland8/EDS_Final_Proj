@@ -1,0 +1,239 @@
+---
+title: "Last Take"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(arsenal)
+library(dplyr)
+library(ggplot2)
+library(here)
+library(tidyr)
+library(DescTools)
+library(tibble)
+library(calecopal)
+library(ggeffects)
+library(gt)
+library(plotly)
+library(viridis)
+library(hrbrthemes)
+```
+
+```{r}
+data1 <- read.csv("last_take.csv")
+```
+
+```{r}
+head(data1)
+```
+
+```{r}
+data2 <- data1 %>% 
+  mutate(prop_tree_loss = (tree_cover_loss_ha/area_sqkm)) %>% 
+  mutate(prop_dalys = (dalys/population))
+```
+
+```{r}
+head(data2)
+```
+
+```{r}
+data3 <- data2 %>% 
+  mutate(per_tree_loss = (prop_tree_loss * 100)) %>% 
+  mutate(per_dalys = (prop_dalys * 100))
+```
+
+```{r}
+head(data3)
+```
+
+
+```{r}
+ggplot(data3, aes(sample = prop_dalys)) +
+  geom_qq() + geom_qq_line()
+```
+
+```{r}
+ggplot(data3, aes(sample = dalys)) +
+  geom_qq() + geom_qq_line()
+```
+
+```{r}
+data3 <- data3 %>% 
+  mutate(logdalys = log(dalys))
+```
+
+```{r}
+ggplot(data3, aes(sample = logdalys)) +
+  geom_qq() + geom_qq_line()
+```
+
+
+```{r}
+data4 <- data3 %>% 
+  mutate(log_dalys = log(prop_dalys))
+```
+
+```{r}
+head(data4)
+```
+
+```{r}
+ggplot(data4, aes(sample = log_dalys)) +
+  geom_qq() + geom_qq_line()
+```
+
+
+```{r}
+data4 <- data4 %>% 
+  mutate(log_GDP = log(GDP_capita))
+```
+
+```{r}
+mod1 <- lm(logdalys ~ prop_tree_loss, data = data4)
+
+summary(mod1)
+```
+
+```{r}
+ggplot(data4, aes(y = log_dalys, x = prop_tree_loss)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+data4 <- data4 %>% 
+  mutate(win_prop_tree = Winsorize(prop_tree_loss, minval = NULL, maxval = NULL, probs = c(0.00, 0.95), na.rm = TRUE, type = 9))
+```
+
+
+```{r}
+graph1 <- ggplot(data4, aes(y = log_dalys, x = win_prop_tree)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE)
+print(graph1)
+```
+
+
+```{r}
+mod2 <- lm(logdalys ~ win_prop_tree, data = data4)
+
+summary(mod2)
+
+names(mod2)
+```
+
+```{r}
+graph2 <- ggplot(data4, aes(y = log_dalys, x = win_prop_tree, color = log_GDP)) +
+  geom_point(aes(size = 0.5)) +
+  stat_smooth(method = "lm", se = FALSE)
+print(graph2)
+```
+
+
+```{r}
+mod3 <- lm(log_dalys ~ win_prop_tree + log_GDP, data = data4)
+
+summary(mod3)
+
+names(mod3)
+```
+
+```{r}
+graph3 <- ggplot(data4, aes(y = log_dalys, x = log_GDP, color = win_prop_tree)) +
+  geom_point(aes(size = 0.5)) +
+  stat_smooth(method = "lm", se = FALSE)
+print(graph3)
+```
+
+
+```{r}
+data5 <- data4 %>% 
+  mutate(country_income_level = 
+           case_when(GDP_capita >= 13000 ~ "high", 
+                     GDP_capita >= 4000 ~ "middle", 
+                     GDP_capita <= 4000 ~ "low"))
+```
+
+```{r}
+data5 %>% 
+  group_by(country_income_level) %>% 
+  summarize(n = n())
+```
+```{r}
+equLOWcountries <- c("Burundi", "Benin", "Bhangladesh", "Bolivia", "Central African Republic", "Cote d'Ivoire", "Cameroon", "Democratic Republic of Congo", "Congo", "Comoros", "Ethiopia", "Ghana", "Guinea", "Gambia", "Honduras", "Haiti", "Indonesia", "Kenya", "Cambodia", "Laos", "Liberia", "Madagascar", "Mali", "Myanmar", "Mozambique",
+"Mauritania", "Malawi", "Nigeria", "Nicaragua", "Phillipines", "Rwanda", "Senegal", "Sierra Leone", "El Salvador", "Eswatini", "Togo", "Tanzania", "Uganda", "Vietnam", "Zambia", "Zimbabwe")
+```
+
+```{r}
+noneqLOWcountries <- c("AFG", "ARM", "BTN", "CPV", "EGY", "ERI", "FSM", "GNB", "IND", "KGZ", "LSO", "MAR", "MDA", "MNG", "NER", "NPL", "PAK", "PNG", "SDN", "SLB", "SSD", "STP", "SYR", "TCD", "TJK", "TLS", "TUN", "UKR", "UZB", "VUT") 
+```
+
+
+```{r}
+data6 <- data5 %>% 
+  filter(country_income_level == "low") %>% 
+  filter(!(code %in% c(noneqLOWcountries)))
+```
+
+mod3 <- lm(log_dalys ~ win_prop_tree + log_GDP, data = data4)
+```{r}
+mod4 <- lm(log_dalys ~ win_prop_tree, data = data6)
+
+summary(mod4)
+```
+```{r}
+ggplot(data6, aes(y = log_dalys, x = win_prop_tree)) +
+  geom_point(aes(color = GDP_capita, size = 1.0)) +
+  stat_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+mod5 <- lm(log_dalys ~ win_prop_tree + log_GDP, data = data6)
+
+summary(mod5)
+```
+
+```{r}
+ggplot(data6, aes(y = log_dalys, x = GDP_capita)) +
+  geom_point(aes(color = win_prop_tree, size = 2)) +
+  stat_smooth(method = "lm", se = FALSE)
+```
+
+
+
+```{r}
+# Interactive version
+p <- data5 %>%
+  mutate(GDP_capita=round(GDP_capita,0)) %>%
+  mutate(population=round(population/1000000,2)) %>%
+  mutate(log_dalys=round(log_dalys,1)) %>%
+  
+  # Reorder countries to having big bubbles on top
+  arrange(desc(population)) %>%
+  #mutate(country = factor(country, country)) %>%
+  
+  # prepare text for tooltip
+  mutate(text = paste("Country: ", country, "\nPopulation (M): ", population, "\n DALYs: ", log_dalys, "\nGdp per capita: ", GDP_capita, sep="")) %>%
+  
+  # Classic ggplot
+  ggplot( aes(x=GDP_capita, y=log_dalys, size = population, color = country_income_level, text=text)) +
+    geom_point(alpha=0.5) +
+    scale_size(range = c(1.4, 19), name="Global DALYs") +
+    scale_color_viridis(discrete=TRUE, guide=FALSE) +
+    theme_ipsum() +
+    theme(legend.position="none")
+
+pp <- ggplotly(p, tooltip="text")
+pp
+```
+
+Hypothesis Testing
+
+
