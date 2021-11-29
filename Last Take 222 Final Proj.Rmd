@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
 
 ```{r}
+library(prettydoc)
 library(arsenal)
 library(dplyr)
 library(ggplot2)
@@ -23,6 +24,8 @@ library(gt)
 library(plotly)
 library(viridis)
 library(hrbrthemes)
+library(modelr)
+library(gtsummary)
 ```
 
 ```{r}
@@ -115,9 +118,14 @@ data4 <- data4 %>%
 
 ```{r}
 graph1 <- ggplot(data4, aes(y = log_dalys, x = win_prop_tree)) +
-  geom_point() +
-  stat_smooth(method = "lm", se = FALSE)
-print(graph1)
+  geom_point(color = 'darkblue', size = 3) +
+  stat_smooth(method = "lm", color = "red", fill = "#69b3a2", se = TRUE) +
+  labs(x = "Proportion of Forest Loss (ha)", y = "Proportion of DALYs (log)") +
+  ggtitle("Effect of Forest Loss on Disability Adjusted Life Years (DALYs) by country") +
+  theme_bw() +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5))
+graph1
+  
 ```
 
 
@@ -125,20 +133,37 @@ print(graph1)
 mod2 <- lm(logdalys ~ win_prop_tree, data = data4)
 
 summary(mod2)
-
-names(mod2)
 ```
+```{r}
+fire <- cal_palette(name = "fire", n = 15, type = "continuous")
+superbloom <- cal_palette(name = "superbloom3", n = 15, type = "continuous")
+kelp <- cal_palette(name = "kelp1", n = 15, type = "continuous")
+
+kelp1 <- cal_palette(name = "kelp1", n = 2, type = "continuous")
+
+```
+
 
 ```{r}
 graph2 <- ggplot(data4, aes(y = log_dalys, x = win_prop_tree, color = log_GDP)) +
-  geom_point(aes(size = 0.5)) +
-  stat_smooth(method = "lm", se = FALSE)
-print(graph2)
+  geom_point(size = 3) +
+  stat_smooth(method = "lm", color = "red", fill = "#69b3a2", se = TRUE) +
+  labs(x = "Proportion of Forest Loss (ha)", y = "Proportion of DALYs (log)") +
+  ggtitle("Effect of Forest Loss on Disability Adjusted Life Years (DALYs) by Country") +
+  theme_bw()
+
+graph2 +
+  guides(size = FALSE) +
+  labs(colour = "GDP per Capita") +
+  theme(legend.position = "bottom") +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
+  scale_color_gradientn(colours = kelp)
+
 ```
 
 
 ```{r}
-mod3 <- lm(log_dalys ~ win_prop_tree + log_GDP, data = data4)
+mod3 <- lm(log_dalys ~ win_prop_tree*log_GDP, data = data4)
 
 summary(mod3)
 
@@ -146,10 +171,40 @@ names(mod3)
 ```
 
 ```{r}
-graph3 <- ggplot(data4, aes(y = log_dalys, x = log_GDP, color = win_prop_tree)) +
-  geom_point(aes(size = 0.5)) +
-  stat_smooth(method = "lm", se = FALSE)
-print(graph3)
+ #ggplot(data4, aes(y = log_dalys, x = log_GDP, color = win_prop_tree)) +
+  #geom_point(aes(size = 0.5)) +
+  #stat_smooth(method = "lm", se = FALSE)
+
+graph3 <- ggplot(data4, aes(y = log_dalys, x = log_GDP, color = log_GDP)) +
+  geom_point(size = 3) +
+  stat_smooth(method = "lm", color = "blue", fill = "#69b3a2", se = TRUE) +
+  labs(x = "GDP per capita", y = "Proportion of DALYs (log)") +
+  ggtitle("Effect of Economic Wealth on Disability Adjusted Life Years (DALYs) by country") +
+  theme_bw()
+
+graph3 +
+  guides(size = FALSE) +
+  labs(colour = "GDP per Capita") +
+  theme(legend.position = "bottom") +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
+  scale_color_gradientn(colours = kelp)
+
+```
+
+```{r}
+graph4 <- ggplot(data4, aes(y = log_dalys, x = log_GDP, color = win_prop_tree)) +
+  geom_point(size = 3) +
+  stat_smooth(method = "lm", color = "blue", fill = "#69b3a2", se = TRUE) +
+  labs(x = "GDP per capita", y = "Proportion of DALYs (log)") +
+  ggtitle("Effect of Economic Wealth on Disability Adjusted Life Years (DALYs) by country") +
+  theme_bw()
+
+graph4 +
+  guides(size = FALSE) +
+  labs(colour = "Proportion of Forest Loss") +
+  theme(legend.position = "bottom") +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
+  scale_color_gradientn(colours = superbloom)
 ```
 
 
@@ -184,56 +239,299 @@ data6 <- data5 %>%
 
 mod3 <- lm(log_dalys ~ win_prop_tree + log_GDP, data = data4)
 ```{r}
-mod4 <- lm(log_dalys ~ win_prop_tree, data = data6)
+mod4 <- lm(log_dalys ~ win_prop_tree * GDP_capita, data = data6)
 
 summary(mod4)
 ```
-```{r}
-ggplot(data6, aes(y = log_dalys, x = win_prop_tree)) +
-  geom_point(aes(color = GDP_capita, size = 1.0)) +
-  stat_smooth(method = "lm", se = FALSE)
-```
 
 ```{r}
-mod5 <- lm(log_dalys ~ win_prop_tree + log_GDP, data = data6)
+mod5 <- lm(log_dalys ~ win_prop_tree * GDP_capita, data = data6)
 
 summary(mod5)
 ```
 
 ```{r}
-ggplot(data6, aes(y = log_dalys, x = GDP_capita)) +
-  geom_point(aes(color = win_prop_tree, size = 2)) +
-  stat_smooth(method = "lm", se = FALSE)
+#ggplot(data6, aes(y = log_dalys, x = win_prop_tree)) +
+  #geom_point(aes(color = GDP_capita, size = 1.0)) +
+  #stat_smooth(method = "lm", se = FALSE)
+
+graph5 <- ggplot(data6, aes(y = log_dalys, x = win_prop_tree, color = GDP_capita)) +
+  geom_point(size = 4) +
+  stat_smooth(method = "lm", color = "red", fill = "#69b3a2", se = TRUE) +
+  labs(x = "Proportion of Forest Loss (ha)", y = "Proportion of DALYs (log)") +
+  ggtitle("Effect of Forest Loss on Disability Adjusted Life Years (DALYs) \n for Low Income, Tropical Nations") +
+  theme_bw()
+
+graph5 +
+  guides(size = FALSE) +
+  labs(colour = "GDP per Capita") +
+  theme(legend.position = "bottom") +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
+  scale_color_gradientn(colours = kelp)
+```
+
+```{r}
+#ggplot(data6, aes(y = log_dalys, x = log_GDP)) +
+  #geom_point(aes(color = win_prop_tree, size = 1.0)) +
+  #stat_smooth(method = "lm", se = FALSE)
+
+graph6 <- ggplot(data6, aes(y = log_dalys, x = GDP_capita, color = win_prop_tree)) +
+  geom_point(size = 4) +
+  stat_smooth(method = "lm", color = "red", fill = "#69b3a2", se = TRUE) +
+  labs(x = "GDP per capita", y = "Proportion of DALYs (log)") +
+  ggtitle("Effect of Economic Wealth on Disability Adjusted Life Years (DALYs) \n for Low Income, Tropical Nations") +
+  theme_bw()
+
+graph6 +
+  guides(size = FALSE) +
+  labs(colour = "Proportion of Forest Loss") +
+  theme(legend.position = "bottom") +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
+  scale_color_gradientn(colours = superbloom)
 ```
 
 
+```{r}
+mod5 <- lm(log_dalys ~ win_prop_tree * GDP_capita, data = data6)
+
+summary(mod5)
+```
+
 
 ```{r}
-# Interactive version
-p <- data5 %>%
-  mutate(GDP_capita=round(GDP_capita,0)) %>%
-  mutate(population=round(population/1000000,2)) %>%
-  mutate(log_dalys=round(log_dalys,1)) %>%
-  
-  # Reorder countries to having big bubbles on top
+data6 %>%
   arrange(desc(population)) %>%
-  #mutate(country = factor(country, country)) %>%
+  mutate(country = factor(country, country)) %>%
+  ggplot(aes(x=GDP_capita, y=log_dalys, size=per_tree_loss, fill= GDP_capita)) +
+    stat_smooth(method = "lm", color = "black", se = FALSE) +
+    geom_point(alpha=0.5, shape=21, color="black") +
+    scale_size(range = c(1.4, 19), name="Population (M)") +
+    scale_fill_viridis(discrete=FALSE, guide=FALSE, option="A") +
+    theme_bw() +
+    theme(legend.position="bottom") +
+    ylab("DALYs (log)") +
+    xlab("Gdp per Capita") +
+    theme(legend.position = "none")
+
+
+```
+
+```{r}
+p <- data6 %>%
+  # Reorder countries to having big bubbles on top
+  arrange(desc(per_tree_loss)) %>%
+  mutate(country = factor(country, country)) %>%
   
   # prepare text for tooltip
-  mutate(text = paste("Country: ", country, "\nPopulation (M): ", population, "\n DALYs: ", log_dalys, "\nGdp per capita: ", GDP_capita, sep="")) %>%
+  mutate(text = paste("Country: ", country, "\nPopulation (M): ", population, "\n% DALYs of Population: ", per_dalys, "\nGdp per capita: ", GDP_capita, "\n % Tree Loss of Country: ", per_tree_loss, sep="")) %>%
   
   # Classic ggplot
-  ggplot( aes(x=GDP_capita, y=log_dalys, size = population, color = country_income_level, text=text)) +
-    geom_point(alpha=0.5) +
-    scale_size(range = c(1.4, 19), name="Global DALYs") +
-    scale_color_viridis(discrete=TRUE, guide=FALSE) +
-    theme_ipsum() +
+  ggplot( aes(x=GDP_capita, y=log_dalys, size = per_tree_loss, color = GDP_capita, text=text)) +
+    geom_point(alpha=0.7) +
+    scale_size(range = c(1.4, 19), name="% Tree Loss") +
+    scale_color_viridis(discrete=FALSE, guide=FALSE, option = "A") +
+    theme_bw() +
     theme(legend.position="none")
 
+# turn ggplot interactive with plotly
 pp <- ggplotly(p, tooltip="text")
 pp
 ```
 
-Hypothesis Testing
 
+Hypothesis Testing and OLS violations
+Does deforestation contribute to the incidence and burden of neglected tropical diseases within countries? 
+
+H0: There is no effect of deforestation and NTD burden.
+B1 = 0
+HA: There will be a positive effect between deforestation and NTD burden. A country with high forest loss will have a high NTD burden whereas a country with low forest loss will have low NTD burden
+B1 =/ 0 
+
+Predictions: I expect to fail to reject the null, this particularly data set is unlikely to capture the intricacies of NTD prevalence and estimation in relation to deforestation.
+
+lm(gdp_growth ~ number + avg_strength, data = hgdp) %>%
+  summary() %>% 
+  xtable() %>% 
+  kable(caption = "...")
+
+```{r}
+mod2 <- lm(logdalys ~ win_prop_tree, data = data4)
+
+summary(mod2)
+
+```
+
+Point Estimates:
+B0 = 8.8773
+B1 = 0.6133
+
+Std. Error:
+0.6480
+
+t-statistic:
+0.946
+
+p-value:
+0.345
+
+R-squared: 0.005121
+
+OLS Assumptions - unbiased and lowest variance
+correlation: I'm not sure if you really need this with the regression, it's just another way of showing that this relationship is "insignificant" 
+
+0.108 (zero correlation)
+
+1. 'yes' to an extent obviously hugely variable
+2. Can not test but has likely in this case been violated (diseases are hardly ever explained by just one variable). Go more into this in part 2
+3. Yes
+4. Mean residuals (-15.84636) - not unbiased 
+
+```{r}
+#data4 %>% 
+  #summarize(dalys_cor = cor(log_dalys, win_prop_tree, use = "complete.obs")) %>% 
+```
+```{r}
+#mean(predictions$residuals, na.rm = TRUE)
+```
+
+```{r}
+mod2 <- lm(logdalys ~ win_prop_tree, data = data4)
+
+predictions <- data4 %>% add_predictions(mod2) %>%
+  mutate(residuals = log_dalys-pred)
+```
+
+```{r}
+#ggplot(data=predictions) + geom_histogram(aes(residuals), bins=80) +
+ # theme_bw()
+
+ggplot(predictions, aes(residuals)) +
+  geom_histogram(color = "dark blue", fill = "dark blue", bins = 80) +
+  geom_density(alpha = 0.2, fill="lightblue") + 
+  theme_bw()
+```
+
+```{r}
+ggplot(predictions) + 
+  geom_point(aes(x=win_prop_tree, y=residuals), color = "dark blue", size = 3, alpha = .5) +
+  theme_bw()
+```
+
+
+Hypothesis Testing and OLS violations - adding income to model
+Does deforestation affect the incidence and burden of neglected tropical diseases within countries when the model contributes for the affect of country economic wealth? 
+
+H0: There is no effect of deforestation and NTD burden.
+B1 = 0
+HA: There will be a positive effect between deforestation and NTD burden. Low economic, tropical countries with high deforestation rates will have a high incidence of DALYs per their populations. 
+B1 =/ 0 
+
+Predictions: I expect to fail to reject the null, even this more focused subset of the data set is unlikely to capture the intricacies of NTD prevalence and estimation in relation to deforestation.
+
+
+```{r}
+mod3 <- lm(log_dalys ~ win_prop_tree * GDP_capita, data = data4)
+
+summary(mod3)
+```
+Point Estimates:
+B0 = -5.96
+B1 = 1.094
+
+Std. Error: 5.146e-01
+
+
+t-statistic: 2.125 
+
+p-value: 0.035 *
+
+R-squared: 0.3936
+
+
+OLS Assumptions - unbiased and lowest variance
+
+
+```{r}
+predictions2 <- data4 %>% add_predictions(mod3) %>%
+ mutate(residuals = log_dalys-pred)
+
+#ggplot(data=predictions2) + geom_histogram(aes(residuals), bins=80)
+
+ggplot(predictions2, aes(residuals)) +
+  geom_histogram(color = "dark blue", fill = "dark blue", bins = 80) +
+  geom_density(alpha = 0.2, fill="lightblue") + 
+  theme_bw()
+
+mean(predictions2$residuals, na.rm = TRUE)
+
+#ggplot(predictions) + geom_point(aes(x=GDP_capita, y=residuals))
+
+ggplot(predictions2) + 
+  geom_point(aes(x=win_prop_tree, y=residuals), color = "dark blue", size = 3, alpha = .5) +
+  theme_bw()
+
+```
+
+
+
+1. 'yes' to an extent obviously hugely variable
+2. Can not test but has likely in this case been violated (diseases are hardly ever explained by just a couple). Go more into this...
+3. Yes
+4. Mean residuals: -4.153504e-15 (so basically zero, satisfying unbiasedness) BUT looking at geom_point graph those error terms are really tightly clumped and not homogeneous so there might be biasness there. 
+
+
+
+
+Hypothesis Testing and OLS Assumptions for Low Income & Tropical Countries
+Does deforestation affect the incidence and burden of neglected tropical diseases within countries that a geographically tropical and disadvantaged on the global economic spectrum? 
+
+H0: There is no effect of deforestation and NTD burden.
+B1 = 0
+HA: There will be a positive effect between deforestation and NTD burden. Low economic, tropical countries with high deforestation rates will have a high incidence of DALYs per their populations. 
+B1 =/ 0 
+
+Predictions: I expect to fail to reject the null, even this more focused subset of the data set is unlikely to capture the intricacies of NTD prevalence and estimation in relation to deforestation.
+```{r}
+mod5 <- lm(log_dalys ~ win_prop_tree * GDP_capita, data = data6)
+
+summary(mod5)
+```
+Point Estimates:
+B0 = -3.2146577
+B1 = 1.0140100
+
+Std. Error: 0.7203759 
+
+
+t-statistic: 1.408
+
+p-value: 0.1674
+
+R-squared: 0.4162 
+
+
+OLS Assumptions - unbiased and lowest variance
+1. 'yes' to an extent obviously hugely variable
+2. Can not test but has likely in this case been violated (diseases are hardly ever explained by just a couple). Go more into this...
+3. Yes
+4. Mean Residuals:-4.018415e-16, this is the least unbiased of the three models
+```{r}
+predictions3 <- data6 %>% add_predictions(mod5) %>%
+  mutate(residuals = log_dalys-pred)
+
+#ggplot(data=predictions2) + geom_histogram(aes(residuals), bins=80)
+
+ggplot(predictions3, aes(residuals)) +
+  geom_histogram(color = "dark blue", fill = "dark blue", bins = 80) +
+  geom_density(alpha = 0.2, fill="lightblue") + 
+  theme_bw()
+
+mean(predictions3$residuals, na.rm = TRUE)
+
+#ggplot(predictions) + geom_point(aes(x=GDP_capita, y=residuals))
+
+ggplot(predictions3) + 
+  geom_point(aes(x=win_prop_tree, y=residuals), color = "dark blue", size = 3, alpha = .5) +
+  theme_bw()
+```
 
