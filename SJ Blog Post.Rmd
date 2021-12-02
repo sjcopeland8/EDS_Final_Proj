@@ -63,8 +63,7 @@ kelp1 <- cal_palette(name = "kelp1", n = 2, type = "continuous")
 
 #### **Omitted-variable bias and the ability to predict Neglected Tropical Disease burden on a global scale by correlative, changing environmental variables.**
 
-Neglected tropical diseases (NTDs) are a group of \~20 conditions that permeate globally. They can infect the spectra of the human population with infection typically coming from the surrounding natural environment; they account for \~17% of infectious diseases
-in humans^1,2^.
+Neglected tropical diseases (NTDs) are a group of \~20 conditions. They can infect the spectra of the human population with infection typically coming from the surrounding natural environment; they account for \~17% of infectious diseases in humans^1,2^.
 
 Many of these diseases require at the very least a host environment or a non-human reservoir host for permeation; several, in addition, are vector-borne diseases^2,3^. Their reliance on natural ecosystems makes them highly sensitive to anthropogenic change.
 Anthropogenic change can affect a landscape indirectly, e.g., via climate change or directly through things such as urbanization, resource exploitation, deforestation, etc^4^. Understanding infection prevalence levels furthers the analyses of how these landscape changes may be associated with the health of residing human populations.
@@ -75,7 +74,7 @@ It has been argued that high levels of biodiversity would help protect against s
 reverse to this^7,8^. Like the debate noted above, studies researching the link between deforestation and pathogen or pathogen-host prevalence have found mixed results^2^.
 
 *Are levels of deforestation associated with the infection prevalence of neglected tropical diseases?* I utilized one simple and two multiple linear regression models to answer these questions using data collected on a global scale, with the data separated into totals and then subsequently proportions of NTD burden in the form of DALYs (Disability Adjusted Life Years) and the loss in hectares of forest coverage, by country. I hypothesized that countries' with higher levels of total forest loss would also tend to have higher rates of NTDs burden. I predicted this trend would be challenging to determine globally due
-to disease-landscape level dynamics' natural complexities
+to disease-landscape level dynamics' natural complexities.
 
 **The Datasets**
 
@@ -85,11 +84,11 @@ to disease-landscape level dynamics' natural complexities
 and nutritional disease burden since 1990. The data sub-section to this set titled "neglected tropical diseases" was utilized. Total DALYs per country do not reflect the proportion of the country suffering from disease-related effects; population data from
 the World Bank was collected to attain such proportion. This dataset included Malaria in its tabulation of NTDs. Historically Malaria was considered an NTD; however, it is currently not listed by major world health organizations as an NTD. Data from the year 2017 was used in the analysis.
 
-GDP per capita data for each country was obtained via a published dataset by the World Bank (<https://data.worldbank.org/>). GDP per capita data is one of the most common forms of financial data available at a country level. However, this data may omit specific political and economic issues of each country in this proportion. The country's wealth is proportioned over all its citizens in this data, whereas in truth, a large portion of a country's wealth may be retained by a select few. Data from 2017 was used in the analysis.
+*GDP per capita* data for each country was obtained via a published dataset by the World Bank (<https://data.worldbank.org/>). GDP per capita data is one of the most common forms of financial data available at a country level. However, this data may omit specific political and economic issues of each country in this proportion. The country's wealth is proportioned over all its citizens in this data, whereas in truth, a large portion of a country's wealth may be retained by a select few. Data from 2017 was used in the analysis.
 
-**Part 1:** *Is there a trend between forest loss and NTD burden?*Initially, a simple linear regression model utilizing Ordinary Least Squares (OLS) fit was applied to understand the relationship between the trend of deforestation and NTD burden. While a correlation calculation could have been utilized, I wanted the additional information provided by OLS, which would enable me to interpret the variance in disease burden per country explained by their deforestation levels and the likelihood that deforestation levels have a significant relation to NTD burden. The model results showed an insignificant association between country level deforestation and NTDs burden (*p* = 0.156, *a =* 0.05) (R^2^ = 0.0117).
+**Part 1:** *Is there a trend between forest loss and NTD burden?*Initially, a simple linear regression model utilizing Ordinary Least Squares (OLS) fit was applied to understand the relationship between the trend of deforestation and NTD burden. While a correlation calculation could have been utilized, I wanted the additional information provided by OLS, which would enable me to interpret the variance in disease burden per country explained related to their deforestation levels and the likelihood that deforestation levels have a significant trend with NTD burden. The model results showed an insignificant association between country level deforestation and NTDs burden (*p* = 0.156, $\alpha$ *=* 0.05) (R^2^ = 0.0117).
 
-![](images/Screen%20Shot%202021-12-01%20at%2011.31.42%20PM.png){width="656"}
+![](images/Screen%20Shot%202021-12-02%20at%208.52.04%20AM.png)
 
 ```{r}
 mod1 <- lm(logdalys ~ win_prop_tree, data = data4)
@@ -108,7 +107,7 @@ This outcome was relatively expected. Pathogen prevalence and disease burden are
 
 To aid in model fit and at least assuage some of the omitted-variables bias issues, I wanted to add a variable to the model that I knew showed a significant trend between that variable and NTD burden. Economic status and, in particular poverty levels, have been found in prior studies to be an incredibly significant variable to NTD burden levels. Before adding this to the model, this relationship can be noticed by just adding GDP per capita as a color variation to the scatter plot trend of deforestation related to the NTD burden (Figure 2).
 
-![](images/Screen%20Shot%202021-12-01%20at%2011.33.25%20PM.png){width="674"}
+![](images/Screen%20Shot%202021-12-02%20at%208.52.39%20AM.png)
 
 ```{r}
 graph2 <- ggplot(data4, aes(y = logdalys, x = win_prop_tree, color = log_GDP)) +
@@ -129,10 +128,10 @@ graph2 <- graph2 +
 **Part 2:** *When the model includes an economic variable, is there a trend between deforestation levels and NTD burden?* This time a multiple linear regression model with an OLS fit was applied to understand the strength of the relationship between trends in deforestation levels and trends in NTD burden when GDP per capita is held constant. Including an additional variable aims to decrease the issues with OVB and improve the understanding of what is an identifier to the variation seen in NTD burdens across the globe.
 
 The model results showed a significant relationship between GDPs per capita and NTD
-burden (*p* = \<0.001, *a* = 0.05) (Figure 3).  In this model, there continued to be an
-insignificant relationship between the level of deforestation and the level of NTD burden within a country (*p* = 0.145, *a* = 0.05) (Figure 3). The model fit and share of NTD burden variation explained by the model increased to 39% compared to the simple linear regression model in part 1 (R^2^adj = 03885).
+burden (*p* = \<0.001, $\alpha$= 0.05) (Figure 3).  In this model, there continued to be an
+insignificant relationship between the level of deforestation and the level of NTD burden within a country (*p* = 0.145, $\alpha$= 0.05) (Figure 3). The model fit and share of NTD burden variation explained by the model increased to 39% compared to the simple linear regression model in part 1 (R^2^adj = 03885).
 
-![](images/Screen%20Shot%202021-12-01%20at%2011.43.07%20PM.png){width="680"}
+![](images/Screen%20Shot%202021-12-02%20at%208.54.31%20AM.png)
 
 ```{r}
 mod2 <- lm(logdalys ~ win_prop_tree + GDP_capita, data = data4)
@@ -183,9 +182,9 @@ data6 <- data5 %>%
 **Part 3:** *Is there a trend between deforestation levels and NTD burden when the model includes an economic variable and is selective to only countries that have low GPDs per capita and are in tropical climates?* This multiple linear regression model with an OLS fit was applied to understand the strength of the relationship between trends in deforestation and trends in NTD burden when GDP per capita is held constant. This model only included a subset of the data from tropical, emerging nations. The focus on
 low-income nations may lessen the significance of GDP per capita, and these nations tend to have high levels of NTD burden. The predictiveness of deforestation on NTDs could be more apparent in this subset than on the global scale.
 
-Even with solely low-income countries the model results showed a significant relationship between GDPs per capita and NTD burden (*p* = \<0.001, *a* = 0.05) (Figure 3). There continued to be an insignificant relationship between the level of deforestation and the level of NTD burden within a country (*p* = 0.986, *a* = 0.05)(R^2^ adj = 0.397)(Figure 4).
+Even with solely low-income countries the model results showed a significant relationship between GDPs per capita and NTD burden (*p* = \<0.001, $\alpha$= 0.05) (Figure 3). There continued to be an insignificant relationship between the level of deforestation and the level of NTD burden within a country (*p* = 0.986, $\alpha$= 0.05)(R^2^ adj = 0.397)(Figure 4).
 
-![](images/Screen%20Shot%202021-12-01%20at%2011.38.14%20PM.png){width="668"}
+![](images/Screen%20Shot%202021-12-02%20at%208.55.27%20AM.png)
 
 ```{r}
 mod4 <- lm(logdalys ~ win_prop_tree + GDP_capita, data = data6)
