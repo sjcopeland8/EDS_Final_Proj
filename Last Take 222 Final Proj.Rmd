@@ -1,6 +1,8 @@
 ---
 title: "Last Take"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -105,7 +107,7 @@ summary(mod1)
 ```
 
 ```{r}
-ggplot(data4, aes(y = log_dalys, x = prop_tree_loss)) +
+ggplot(data4, aes(y = logdalys, x = tree_cover_loss)) +
   geom_point() +
   stat_smooth(method = "lm", se = FALSE)
 ```
@@ -125,7 +127,7 @@ graph1 <- ggplot(data4, aes(y = log_dalys, x = win_prop_tree)) +
   theme_bw() +
   theme(plot.title=element_text(hjust=0.5, vjust=0.5))
 graph1
-  
+
 ```
 
 
@@ -349,10 +351,6 @@ B1 =/ 0
 
 Predictions: I expect to fail to reject the null, this particularly data set is unlikely to capture the intricacies of NTD prevalence and estimation in relation to deforestation.
 
-lm(gdp_growth ~ number + avg_strength, data = hgdp) %>%
-  summary() %>% 
-  xtable() %>% 
-  kable(caption = "...")
 
 ```{r}
 mod2 <- lm(logdalys ~ win_prop_tree, data = data4)
@@ -451,6 +449,8 @@ R-squared: 0.3936
 OLS Assumptions - unbiased and lowest variance
 
 
+
+
 ```{r}
 predictions2 <- data4 %>% add_predictions(mod3) %>%
  mutate(residuals = log_dalys-pred)
@@ -470,6 +470,11 @@ ggplot(predictions2) +
   geom_point(aes(x=win_prop_tree, y=residuals), color = "dark blue", size = 3, alpha = .5) +
   theme_bw()
 
+```
+```{r}
+ggplot(predictions2) + 
+  geom_point(aes(x=GDP_capita, y=residuals), color = "dark blue", size = 3, alpha = .5) +
+  theme_bw()
 ```
 
 
