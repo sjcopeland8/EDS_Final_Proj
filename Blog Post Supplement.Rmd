@@ -1,0 +1,160 @@
+---
+title: "Blog Post Supplement"
+author: "Stephanie Copeland"
+date: "12/9/2021"
+output: html_document
+---
+
+```{r, include=FALSE}
+#knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+#tinytex::install_tinytex()
+library(tinytex)
+
+```
+
+```{r}
+library(prettydoc)
+library(arsenal)
+library(dplyr)
+library(ggplot2)
+library(here)
+library(tidyr)
+library(DescTools)
+library(tibble)
+library(calecopal)
+library(ggeffects)
+library(gt)
+library(plotly)
+library(viridis)
+library(hrbrthemes)
+library(modelr)
+library(gtsummary)
+```
+```{r}
+data1 <- read.csv("last_take.csv")
+
+data2 <- data1 %>% 
+  mutate(prop_tree_loss = (tree_cover_loss_ha/area_sqkm)) %>% 
+  mutate(prop_dalys = (dalys/population)) %>% 
+  mutate(area_ha = (area_sqkm * 100)) %>% 
+  mutate(tree_cover_loss = (tree_cover_loss_ha/area_ha)) %>% 
+  select(-prop_tree_loss) %>% 
+  select(-tree_cover_loss_ha) %>% 
+  select(-dalys)
+
+data3 <- data2 %>% 
+  mutate(logdalys = log(prop_dalys))
+
+data4 <- data3 %>% 
+  mutate(log_GDP = log(GDP_capita))
+
+data4 <- data4 %>% 
+  mutate(win_prop_tree = Winsorize(tree_cover_loss, minval = NULL, maxval = NULL, probs = c(0.00, 0.95), na.rm = TRUE, type = 9))
+
+fire <- cal_palette(name = "fire", n = 15, type = "continuous")
+superbloom <- cal_palette(name = "superbloom3", n = 15, type = "continuous")
+kelp <- cal_palette(name = "kelp1", n = 15, type = "continuous")
+kelp1 <- cal_palette(name = "kelp1", n = 2, type = "continuous")
+```
+
+###Linear display of NTD burden
+Geom qq line of the proportion of DALYs (dependent variable), underwent log normalization. 
+```{r}
+ggplot(data3, aes(sample = logdalys)) +
+  geom_qq() + geom_qq_line()
+```
+
+###Corrected Latex Linear Equations
+In the blog post, the two equations for the multiple linear regressions did not equate to the graph pictures found in the post. The latex equations had deforestation at $$\beta_1$$ or the slope when the graphs shows GDP per captia as $$\beta_1$$. The equations have been corrected here to reflect the graph images. 
+$$ NTD_i = \beta_0 + \beta_1GDPpercaptia_i + \beta_2Deforestation_i + \mu_i $$
+```{r}
+mod2 <- lm(logdalys ~ win_prop_tree + GDP_capita, data = data4)
+
+graph3 <- ggplot(data4, aes(y = logdalys, x = log_GDP, color = win_prop_tree)) +
+  geom_point(size = 3) +
+  stat_smooth(method = "lm", color = "blue", fill = "#69b3a2", se = TRUE) +
+  labs(x = "GDP per capita", y = "Proportion of DALYs (log)") +
+  ggtitle("Trend of Economic Wealth on Disability Adjusted Life Years (DALYs) by country") +
+  theme_bw()
+
+graph3 <- graph3 +
+  guides(size = FALSE) +
+  labs(colour = "Proportion of Forest Loss") +
+  theme(legend.position = "bottom") +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
+  scale_color_gradientn(colours = superbloom)
+
+plot(graph3)
+```
+
+$$ NTD,Trop,LI_i = \beta_0 + \beta_1GDPpercapita_i + \beta_2Deforestation_i + \mu_i $$
+See interactive graph representing model equation, below. 
+```{r}
+data5 <- data4 %>% 
+  mutate(country_income_level = 
+           case_when(GDP_capita >= 13000 ~ "high", 
+                     GDP_capita >= 4000 ~ "middle", 
+                     GDP_capita <= 4000 ~ "low"))
+
+data5 %>% 
+  group_by(country_income_level) #%>% 
+  #summarize(n = n())
+```
+```{r}
+equLOWcountries <- c("Burundi", "Benin", "Bhangladesh", "Bolivia", "Central African Republic", "Cote d'Ivoire", "Cameroon", "Democratic Republic of Congo", "Congo", "Comoros", "Ethiopia", "Ghana", "Guinea", "Gambia", "Honduras", "Haiti", "Indonesia", "Kenya", "Cambodia", "Laos", "Liberia", "Madagascar", "Mali", "Myanmar", "Mozambique",
+"Mauritania", "Malawi", "Nigeria", "Nicaragua", "Phillipines", "Rwanda", "Senegal", "Sierra Leone", "El Salvador", "Eswatini", "Togo", "Tanzania", "Uganda", "Vietnam", "Zambia", "Zimbabwe")
+
+noneqLOWcountries <- c("AFG", "ARM", "BTN", "CPV", "EGY", "ERI", "FSM", "GNB", "IND", "KGZ", "LSO", "MAR", "MDA", "MNG", "NER", "NPL", "PAK", "PNG", "SDN", "SLB", "SSD", "STP", "SYR", "TCD", "TJK", "TLS", "TUN", "UKR", "UZB", "VUT") 
+
+data6 <- data5 %>% 
+  filter(country_income_level == "low") %>% 
+  filter(!(code %in% c(noneqLOWcountries)))
+```
+
+
+Interactive graph with dot size indicating deforestation, dot color indication four breakdown groups of GDP per capita. Graph only displays relationship of GDP per capita to NTD burden with noticeable mixed levels of deforestation across the y-axis for low-income, tropical nations. 
+
+```{r}
+p <- data6 %>%
+  # Reorder countries to having big bubbles on top
+  arrange(desc(per_tree_loss)) %>%
+  mutate(country = factor(country, country)) %>%
+  
+  # prepare text for tooltip
+  mutate(text = paste("Country: ", country, "\nPopulation (M): ", population, "\n% DALYs of Population: ", per_dalys, "\nGdp per capita: ", GDP_capita, "\n % Tree Loss of Country: ", per_tree_loss, sep="")) %>%
+  
+  # Classic ggplot
+  ggplot( aes(x=GDP_capita, y=log_dalys, size = per_tree_loss, color = GDP_capita, text=text)) +
+    geom_point(alpha=0.7) +
+    scale_size(range = c(1.4, 19), name="% Tree Loss") +
+    scale_color_viridis(discrete=FALSE, guide=FALSE, option = "A") +
+    theme_bw() +
+    theme(legend.position="none")
+
+# turn ggplot interactive with plotly
+pp <- ggplotly(p, tooltip="text")
+pp
+```
+
+
+Visualization of the linear relationship between GDP per capita and country level NTD burden. Color gradient and linear slope represents this relationship. 
+```{r}
+graph3 <- ggplot(data4, aes(y = logdalys, x = log_GDP, color = log_GDP)) +
+  geom_point(size = 3) +
+  stat_smooth(method = "lm", color = "blue", fill = "#69b3a2", se = TRUE) +
+  labs(x = "GDP per capita", y = "Proportion of DALYs (log)") +
+  ggtitle("Effect of Economic Wealth on Disability Adjusted Life Years (DALYs) by country") +
+  theme_bw()
+
+graph3 +
+  guides(size = FALSE) +
+  labs(colour = "GDP per Capita") +
+  theme(legend.position = "bottom") +
+  theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
+  scale_color_gradientn(colours = kelp)
+```
+
+
+
