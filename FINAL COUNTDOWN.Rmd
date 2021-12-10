@@ -1,6 +1,9 @@
 ---
 title: "Organized"
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -49,6 +52,7 @@ data2 <- data1 %>%
 ggplot(data2, aes(sample = prop_dalys)) +
   geom_qq() + geom_qq_line()
 ```
+
 ```{r}
 data3 <- data2 %>% 
   mutate(logdalys = log(prop_dalys))
@@ -75,30 +79,22 @@ data4 <- data4 %>%
   mutate(win_prop_tree = Winsorize(tree_cover_loss, minval = NULL, maxval = NULL, probs = c(0.00, 0.95), na.rm = TRUE, type = 9))
 ```
 
-
-
-
-
-
-
-
-
-## Part 1 - Global impacts of deforestation on NTD DALY burden
+## Part 1 - Deforestation association with NTD DALY burden
 
 ```{r}
 mod1 <- lm(logdalys ~ win_prop_tree, data = data4)
 
 summary(mod1)
 ```
+
 ```{r}
-graph1 <- ggplot(data4, aes(y = logdalys, x = win_prop_tree)) +
+ggplot(data4, aes(y = logdalys, x = win_prop_tree)) +
   geom_point(color = 'darkblue', size = 3) +
   stat_smooth(method = "lm", color = "red", fill = "#69b3a2", se = TRUE) +
   labs(x = "Proportion of Forest Loss (ha)", y = "Proportion of DALYs (log)") +
-  ggtitle("Effect of Forest Loss on Disability Adjusted Life Years (DALYs) by country") +
+  ggtitle("Trend of Forest Loss and Disability Adjusted Life Years (DALYs) by country") +
   theme_bw() +
   theme(plot.title=element_text(hjust=0.5, vjust=0.5))
-graph1
 ```
 
 ```{r}
@@ -114,7 +110,7 @@ graph2 <- ggplot(data4, aes(y = logdalys, x = win_prop_tree, color = log_GDP)) +
   geom_point(size = 3) +
   stat_smooth(method = "lm", color = "red", fill = "#69b3a2", se = TRUE) +
   labs(x = "Proportion of Forest Loss (ha)", y = "Proportion of DALYs (log)") +
-  ggtitle("Effect of Forest Loss on Disability Adjusted Life Years (DALYs) by Country") +
+  ggtitle("Trend of Forest Loss and Disability Adjusted Life Years (DALYs) by Country") +
   theme_bw()
 
 graph2 +
@@ -123,37 +119,39 @@ graph2 +
   theme(legend.position = "bottom") +
   theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
   scale_color_gradientn(colours = kelp)
+
 ```
-Hypothesis Testing and OLS violations
-Does deforestation contribute to the incidence and burden of neglected tropical diseases within countries? 
 
-H0: There is no effect of deforestation and NTD burden.
-B1 = 0
-HA: There will be a positive effect between deforestation and NTD burden. A country with high forest loss will have a high NTD burden whereas a country with low forest loss will have low NTD burden
-B1 =/ 0 
+Hypothesis Testing and OLS violations Does deforestation contribute to
+the incidence and burden of neglected tropical diseases within
+countries?
 
-Predictions: I expect to fail to reject the null, this particularly data set is unlikely to capture the intricacies of NTD prevalence and estimation in relation to deforestation.
+H0: There is no effect of deforestation and NTD burden. B1 = 0 HA: There
+will be a positive effect between deforestation and NTD burden. A
+country with high forest loss will have a high NTD burden whereas a
+country with low forest loss will have low NTD burden B1 =/ 0
+
+Predictions: I expect to fail to reject the null, this particularly data
+set is unlikely to capture the intricacies of NTD prevalence and
+estimation in relation to deforestation.
+
 ```{r}
 summary(mod1)
 ```
 
-Point Estimates:
-B0 = -6.9981
-B1 = 71.5909
+Point Estimates: B0 = -6.9981 B1 = 71.5909
 
-Std. Error:
-50.2008
+Std. Error: 50.2008
 
-t-statistic:
-1.426
+t-statistic: 1.426
 
-p-value:
-0.156 
+p-value: 0.156
 
 R-squared: 0.01169
 
-OLS Assumptions - unbiased and lowest variance
-correlation: I'm not sure if you really need this with the regression, it's just another way of showing that this relationship is "insignificant" 
+OLS Assumptions - unbiased and lowest variance correlation: I'm not sure
+if you really need this with the regression, it's just another way of
+showing that this relationship is "insignificant"
 
 ```{r}
 data4 %>% 
@@ -162,10 +160,13 @@ data4 %>%
 
 0.108 (zero correlation)
 
-1. 'yes' to an extent obviously hugely variable
-2. Can not test but has likely in this case been violated (diseases are hardly ever explained by just one variable). Go more into this in part 2
-3. Yes
-4. Mean residuals (4.200678e-15)
+1.  'yes' to an extent obviously hugely variable
+2.  Can not test but has likely in this case been violated (diseases are
+    hardly ever explained by just one variable). Go more into this in
+    part 2
+3.  Yes
+4.  Mean residuals (4.200678e-15)
+
 ```{r}
 predictions <- data4 %>% add_predictions(mod1) %>%
   mutate(residuals = logdalys-pred)
@@ -182,16 +183,10 @@ ggplot(predictions) +
   theme_bw()
 ```
 
-
-
-
-
-
-
 ## Part 2 - Impact of deforestation AND GDP per capita on country NTD DALY burden
 
 ```{r}
-mod2 <- lm(logdalys ~ win_prop_tree*GDP_capita, data = data4)
+mod2 <- lm(logdalys ~ win_prop_tree + GDP_capita, data = data4)
 
 summary(mod2)
 ```
@@ -217,7 +212,7 @@ graph4 <- ggplot(data4, aes(y = logdalys, x = log_GDP, color = win_prop_tree)) +
   geom_point(size = 3) +
   stat_smooth(method = "lm", color = "blue", fill = "#69b3a2", se = TRUE) +
   labs(x = "GDP per capita", y = "Proportion of DALYs (log)") +
-  ggtitle("Effect of Economic Wealth on Disability Adjusted Life Years (DALYs) by country") +
+  ggtitle("Trend of Economic Wealth on Disability Adjusted Life Years (DALYs) by country") +
   theme_bw()
 
 graph4 +
@@ -227,41 +222,50 @@ graph4 +
   theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
   scale_color_gradientn(colours = superbloom)
 ```
-Hypothesis Testing and OLS violations - adding income to model
-Does deforestation affect the incidence and burden of neglected tropical diseases within countries when the model contributes for the affect of country economic wealth? 
 
-H0: There is no effect of deforestation and NTD burden.
-B1 = 0
-HA: There will be a positive effect between deforestation and NTD burden. Low economic, tropical countries with high deforestation rates will have a high incidence of DALYs per their populations. 
-B1 =/ 0 
+Hypothesis Testing and OLS violations - adding income to model Does
+deforestation affect the incidence and burden of neglected tropical
+diseases within countries when the model contributes for the affect of
+country economic wealth?
 
-Predictions: I expect to fail to reject the null, even this more focused subset of the data set is unlikely to capture the intricacies of NTD prevalence and estimation in relation to deforestation.
+H0: There is no effect of deforestation and NTD burden. B1 = 0 HA: There
+will be a positive effect between deforestation and NTD burden. Low
+economic, tropical countries with high deforestation rates will have a
+high incidence of DALYs per their populations. B1 =/ 0
+
+Predictions: I expect to fail to reject the null, even this more focused
+subset of the data set is unlikely to capture the intricacies of NTD
+prevalence and estimation in relation to deforestation.
 
 ```{r}
 summary(mod2)
 ```
 
-
-Point Estimates:
-B0 = -5.96
-B1 = 1.094
+Point Estimates: B0 = -5.96 B1 = 1.094
 
 Std. Error: 5.146e+01
 
+t-statistic: 2.125
 
-t-statistic: 2.125 
-
-p-value: 0.035 *
+p-value: 0.035 \*
 
 R-squared: 0.3936
 
-
 OLS Assumptions - unbiased and lowest variance
 
-1. 'yes' to an extent obviously hugely variable
-2. Can not test but has likely in this case been violated (diseases are hardly ever explained by just a couple). Go more into this...
-3. Yes
-4. Mean residuals: -3.973686e-15 (so basically zero, satisfying unbiasedness) BUT looking at geom_point graph those error terms are really tightly clumped and not homogeneous so there might be biasness there.
+1.  'yes' to an extent obviously hugely variable
+2.  Can not test but has likely in this case been violated (diseases are
+    hardly ever explained by just a couple). Go more into this...
+3.  Yes
+4.  Mean residuals: -3.973686e-15 (so basically zero, satisfying
+    unbiasedness) BUT looking at geom_point graph those error terms are
+    really tightly clumped and not homogeneous so there might be
+    biasness there.
+
+```{r}
+
+```
+
 ```{r}
 predictions2 <- data4 %>% add_predictions(mod2) %>%
  mutate(residuals = logdalys-pred)
@@ -278,17 +282,9 @@ mean(predictions2$residuals, na.rm = TRUE)
 #ggplot(predictions) + geom_point(aes(x=GDP_capita, y=residuals))
 
 ggplot(predictions2) + 
-  geom_point(aes(x=win_prop_tree, y=residuals), color = "dark blue", size = 3, alpha = .5) +
+  geom_point(aes(x=GDP_capita, y=residuals), color = "dark blue", size = 3, alpha = .5) +
   theme_bw()
 ```
-
-
-
-
-
-
-
-
 
 ## Part 3 - Impact of deforestation and income in tropical demarkedly "low income" nations
 
@@ -326,6 +322,7 @@ mod3 <- lm(logdalys ~ win_prop_tree, data = data6)
 
 summary(mod3)
 ```
+
 ```{r}
 graph5 <- ggplot(data6, aes(y = logdalys, x = win_prop_tree, color = log_GDP)) +
   geom_point(size = 4) +
@@ -360,7 +357,7 @@ graph6 +
 ```
 
 ```{r}
-mod4 <- lm(logdalys ~ win_prop_tree * GDP_capita, data = data6)
+mod4 <- lm(logdalys ~ win_prop_tree + GDP_capita, data = data6)
 
 summary(mod4)
 ```
@@ -374,8 +371,11 @@ data6 %>%
     geom_point(alpha=0.5, shape=21, color="black") +
     scale_size(range = c(1.4, 19), name="Population (M)") +
     scale_fill_viridis(discrete=FALSE, guide=FALSE, option="A") +
+    labs(x = "GDP per capita", y = "Proportion of DALYs (log)") +
+  ggtitle("Relation of Deforestation levels and Disability Adjusted Life Years (DALYs) \n for Low Income, Tropical Nations") +
     theme_bw() +
     theme(legend.position="bottom") +
+    theme(plot.title=element_text(hjust=0.5, vjust=0.5)) +
     ylab("DALYs (log)") +
     xlab("Gdp per Capita") +
     theme(legend.position = "none")
@@ -404,39 +404,36 @@ p <- data6 %>%
 pp <- ggplotly(p, tooltip="text")
 pp
 ```
-Hypothesis Testing and OLS Assumptions for Low Income & Tropical Countries
-Does deforestation affect the incidence and burden of neglected tropical diseases within countries that a geographically tropical and disadvantaged on the global economic spectrum? 
 
-H0: There is no effect of deforestation and NTD burden.
-B1 = 0
-HA: There will be a positive effect between deforestation and NTD burden. Low economic, tropical countries with high deforestation rates will have a high incidence of DALYs per their populations. 
-B1 =/ 0 
+Hypothesis Testing and OLS Assumptions for Low Income & Tropical
+Countries Does deforestation affect the incidence and burden of
+neglected tropical diseases within countries that a geographically
+tropical and disadvantaged on the global economic spectrum?
 
-Predictions: I expect to fail to reject the null, even this more focused subset of the data set is unlikely to capture the intricacies of NTD prevalence and estimation in relation to deforestation.
+H0: There is no effect of deforestation and NTD burden. B1 = 0 HA: There
+will be a positive effect between deforestation and NTD burden. Low
+economic, tropical countries with high deforestation rates will have a
+high incidence of DALYs per their populations. B1 =/ 0
 
-```{r}
-summary(mod4)
-```
+Predictions: I expect to fail to reject the null, even this more focused
+subset of the data set is unlikely to capture the intricacies of NTD
+prevalence and estimation in relation to deforestation.
 
+Point Estimates: B0 = -3.2146577 B1 = 1.0140100
 
-Point Estimates:
-B0 = -3.2146577
-B1 = 1.0140100
-
-Std. Error: 0.7203759 
+Std. Error: 0.7203759
 
 t-statistic: 1.408
 
 p-value: 0.1674
 
-R-squared: 0.4162 
+R-squared: 0.4162
 
-
-OLS Assumptions - unbiased and lowest variance
-1. 'yes' to an extent obviously hugely variable
-2. Can not test but has likely in this case been violated (diseases are hardly ever explained by just a couple). Go more into this...
-3. Yes
-4. Mean Residuals:-3.172066e-16, this is the least unbiased of the three models
+OLS Assumptions - unbiased and lowest variance 1. 'yes' to an extent
+obviously hugely variable 2. Can not test but has likely in this case
+been violated (diseases are hardly ever explained by just a couple). Go
+more into this... 3. Yes 4. Mean Residuals:-3.172066e-16, this is the
+least unbiased of the three models
 
 ```{r}
 predictions4 <- data6 %>% add_predictions(mod4) %>%
@@ -457,4 +454,3 @@ ggplot(predictions4) +
   geom_point(aes(x=win_prop_tree, y=residuals), color = "dark blue", size = 3, alpha = .5) +
   theme_bw()
 ```
-
